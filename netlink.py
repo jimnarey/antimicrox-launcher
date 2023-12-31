@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 
-# import sys
+import sys
 import socket
 import struct
+
 
 NETLINK_CONNECTOR = 11
 CN_IDX_PROC = 1
 CN_VAL_PROC = 1
+
+
+PROC_EVENT_TYPES = {
+    1: 'fork',
+    2: 'exec',
+    2147483648: 'exit'
+}
 
 
 def parse_msg_header(nlmsg):
@@ -15,6 +23,25 @@ def parse_msg_header(nlmsg):
         "=LHHLL", nlmsg[:16]
     )
     return hdr
+
+
+def get_event_data(nlmsg):
+    event_data = {
+        'pid': int.from_bytes(nlmsg[56:60], byteorder=sys.byteorder),
+        'event': int.from_bytes(nlmsg[36:40], byteorder=sys.byteorder)}
+    return event_data
+
+
+def analyse_msg(nlmsg):
+    for i in range(16, len(nlmsg) - 3, 4):
+        print('-----------')
+        print(i)
+        num = int.from_bytes(nlmsg[i:i + 4], byteorder=sys.byteorder)
+        print(num)
+        if num == 1:
+            print('FORK')
+        if num == 2:
+            print('EXEC')
 
 
 def create_nl_socket():
@@ -26,10 +53,9 @@ def create_nl_socket():
 def recv_nl_messages(sock):
     while True:
         try:
-            data = sock.recv(65535)
-            # data = sock.recv(131070)
-            msg_header = parse_msg_header(data)
-            print(msg_header)
+            nlmsg = sock.recv(4096)
+            event_data = get_event_data(nlmsg)
+            print(event_data)
         except socket.error as e:
             print("Socket error:", e)
 
