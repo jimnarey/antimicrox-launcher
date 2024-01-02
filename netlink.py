@@ -9,12 +9,9 @@ NETLINK_CONNECTOR = 11
 CN_IDX_PROC = 1
 CN_VAL_PROC = 1
 
-
-PROC_EVENT_TYPES = {
-    1: 'fork',
-    2: 'exec',
-    2147483648: 'exit'
-}
+PROC_EVENT_FORK = 1
+PROC_EVENT_EXEC = 2
+PROC_EVENT_EXIT = 2147483648
 
 
 def parse_msg_header(nlmsg):
@@ -30,18 +27,6 @@ def get_event_data(nlmsg):
         'pid': int.from_bytes(nlmsg[56:60], byteorder=sys.byteorder),
         'event': int.from_bytes(nlmsg[36:40], byteorder=sys.byteorder)}
     return event_data
-
-
-def analyse_msg(nlmsg):
-    for i in range(16, len(nlmsg) - 3, 4):
-        print('-----------')
-        print(i)
-        num = int.from_bytes(nlmsg[i:i + 4], byteorder=sys.byteorder)
-        print(num)
-        if num == 1:
-            print('FORK')
-        if num == 2:
-            print('EXEC')
 
 
 def create_nl_socket():
