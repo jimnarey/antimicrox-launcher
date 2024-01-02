@@ -2,6 +2,7 @@
 
 import sys
 import socket
+import asyncio
 import struct
 
 
@@ -35,21 +36,21 @@ def create_nl_socket():
     return sock
 
 
-def recv_nl_messages(sock):
+async def recv_nl_messages(sock):
     while True:
         try:
-            nlmsg = sock.recv(4096)
+            nlmsg = await loop.sock_recv(sock, 4096)
             event_data = get_event_data(nlmsg)
             print(event_data)
         except socket.error as e:
             print("Socket error:", e)
 
 
-def monitor_process_events():
+async def monitor_process_events():
     nl_socket = create_nl_socket()
     if nl_socket:
         try:
-            recv_nl_messages(nl_socket)
+            await recv_nl_messages(nl_socket)
         finally:
             nl_socket.close()
     else:
@@ -57,4 +58,5 @@ def monitor_process_events():
 
 
 if __name__ == "__main__":
-    monitor_process_events()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(monitor_process_events())
